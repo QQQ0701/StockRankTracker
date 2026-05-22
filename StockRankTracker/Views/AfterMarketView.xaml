@@ -1,0 +1,309 @@
+<UserControl x:Class="StockRankTracker.Views.AfterMarketView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:StockRankTracker.Converters"
+             Background="#1a1a2e">
+
+    <UserControl.Resources>
+        <converters:PriceColorConverter x:Key="PriceColorConverter"/>
+        <converters:RankBadgeTextConverter x:Key="RankBadgeTextConverter"/>
+        <converters:RankBadgeBackgroundConverter x:Key="RankBadgeBackgroundConverter"/>
+        <converters:MarketTagTextConverter x:Key="MarketTagTextConverter"/>
+        <converters:MarketTagBackgroundConverter x:Key="MarketTagBackgroundConverter"/>
+
+        <!-- 下拉選單樣式 -->
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="BorderBrush" Value="#444466"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#2a2a4a"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Padding" Value="8,5"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#4FC3F7"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3a3a5a"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <!-- 主體框 -->
+                            <Border x:Name="MainBorder"
+                            Background="#2a2a4a"
+                            BorderBrush="#444466"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="24"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 目前選中的文字 -->
+                                    <ContentPresenter Grid.Column="0"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              Margin="8,5,4,5"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"
+                                              IsHitTestVisible="False"/>
+
+                                    <!-- 下拉箭頭按鈕 -->
+                                    <ToggleButton Grid.Column="0" Grid.ColumnSpan="2"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                              RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="24"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <!-- 箭頭 -->
+                                                        <Path Grid.Column="1"
+                                                      Data="M 0 0 L 6 6 L 12 0 Z"
+                                                      Fill="#aaaacc"
+                                                      Width="12" Height="6"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+
+                            <!-- 下拉彈出區域 -->
+                            <Popup x:Name="PART_Popup"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           Placement="Bottom"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           PopupAnimation="Slide">
+                                <Border Background="#2a2a4a"
+                                BorderBrush="#444466"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                MinWidth="{TemplateBinding ActualWidth}"
+                                MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                SnapsToDevicePixels="True">
+                                    <ScrollViewer>
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4FC3F7"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4FC3F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- 統計列 -->
+            <RowDefinition Height="Auto"/>   <!-- 篩選列 -->
+            <RowDefinition Height="Auto"/>   <!-- 表頭 -->
+            <RowDefinition Height="*"/>      <!-- 資料列表 -->
+        </Grid.RowDefinitions>
+
+        <!-- ===== 統計列 ===== -->
+        <UniformGrid Grid.Row="0" Columns="5" Margin="10,10,10,5">
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上市" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.ListedCount}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上櫃" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.OtcCount}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上漲" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.UpCount}" Foreground="#FF5050" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="平盤" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.FlatCount}" Foreground="#999" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="下跌" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.DownCount}" Foreground="#4DD078" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ===== 篩選列 ===== -->
+        <DockPanel Grid.Row="1" Margin="10,5,10,5">
+            <!-- 左邊：篩選按鈕 -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <RadioButton Content="全部" IsChecked="True" GroupName="AfterFilter"
+                             Checked="OnFilterAll_Checked"
+                             Style="{StaticResource FilterRadioStyle}" Margin="0,0,5,0"/>
+                <RadioButton Content="新上榜" GroupName="AfterFilter"
+                             Checked="OnFilterNew_Checked"
+                             Style="{StaticResource FilterRadioStyle}"/>
+            </StackPanel>
+
+            <!-- 右邊：日期 + 時間選擇 -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <ComboBox ItemsSource="{Binding AvailableDates}"
+                          SelectedItem="{Binding SelectedDate}"
+                          Style="{StaticResource DarkComboBoxStyle}"
+                          Margin="0,0,8,0"/>
+                <ComboBox ItemsSource="{Binding AvailableTimes}"
+                          SelectedItem="{Binding SelectedTime}"
+                          Style="{StaticResource DarkComboBoxStyle}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- ===== 表頭 ===== -->
+        <Grid Grid.Row="2" Margin="10,0,10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="120"/>
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="股票" Foreground="#666" FontSize="12" Margin="5,4"/>
+            <TextBlock Grid.Column="1" Text="股價" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="2" Text="漲跌幅" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="3" Text="成交額" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="4" Text="名次" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+        </Grid>
+
+        <!-- ===== 資料列表 ===== -->
+        <ListView Grid.Row="3" ItemsSource="{Binding StockList}"
+                  Background="Transparent" BorderThickness="0"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  Margin="10,0,10,10">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0,1,0,0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border Background="#22223a" CornerRadius="4" Padding="5,8" Margin="0,1">
+                                    <ContentPresenter/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="120"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 股票資訊 -->
+                        <StackPanel Grid.Column="0" Margin="5,0">
+                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Symbol}" Foreground="#888" FontSize="11" Margin="0,0,6,0"/>
+                                <Border CornerRadius="3" Padding="4,1"
+                                        Background="{Binding Market, Converter={StaticResource MarketTagBackgroundConverter}}">
+                                    <TextBlock Text="{Binding Market, Converter={StaticResource MarketTagTextConverter}}"
+                                               Foreground="White" FontSize="10"/>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 股價 -->
+                        <TextBlock Grid.Column="1" Text="{Binding Price}"
+                                   Foreground="{Binding Change, Converter={StaticResource PriceColorConverter}}"
+                                   FontSize="15" FontWeight="Bold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+
+                        <!-- 漲跌幅 -->
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding Change}"
+                                       Foreground="{Binding Change, Converter={StaticResource PriceColorConverter}}"
+                                       FontSize="13" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding ChangePercent}"
+                                       Foreground="{Binding ChangePercent, Converter={StaticResource PriceColorConverter}}"
+                                       FontSize="11" HorizontalAlignment="Right"/>
+                        </StackPanel>
+
+                        <!-- 成交額 -->
+                        <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                   HorizontalAlignment="Right" Margin="0,0,10,0"
+                                   Foreground="#ccc" FontSize="13">
+                            <Run Text="{Binding TurnoverHundredMillion, Mode=OneWay}"/>
+                            <Run Text="億" Foreground="#888" FontSize="11"/>
+                        </TextBlock>
+
+                        <!-- 名次 + Badge -->
+                        <StackPanel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0">
+                            <TextBlock Text="{Binding Rank}" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" HorizontalAlignment="Right"/>
+                            <Border CornerRadius="3" Padding="4,1" HorizontalAlignment="Right" Margin="0,2,0,0">
+                                <Border.Background>
+                                    <MultiBinding Converter="{StaticResource RankBadgeBackgroundConverter}">
+                                        <Binding Path="RankChange"/>
+                                        <Binding Path="IsNewEntry"/>
+                                    </MultiBinding>
+                                </Border.Background>
+                                <TextBlock Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource RankBadgeTextConverter}">
+                                            <Binding Path="RankChange"/>
+                                            <Binding Path="IsNewEntry"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>

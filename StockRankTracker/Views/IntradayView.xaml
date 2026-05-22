@@ -1,0 +1,217 @@
+<UserControl x:Class="StockRankTracker.Views.IntradayView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:StockRankTracker.Converters"
+             Background="#1a1a2e">
+
+    <UserControl.Resources>
+        <!-- Converters -->
+        <converters:PriceColorConverter x:Key="PriceColorConverter"/>
+        <converters:RankBadgeTextConverter x:Key="RankBadgeTextConverter"/>
+        <converters:RankBadgeBackgroundConverter x:Key="RankBadgeBackgroundConverter"/>
+        <converters:MarketTagTextConverter x:Key="MarketTagTextConverter"/>
+        <converters:MarketTagBackgroundConverter x:Key="MarketTagBackgroundConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- 容量警示 -->
+            <RowDefinition Height="Auto"/>   <!-- 統計列 -->
+            <RowDefinition Height="Auto"/>   <!-- 篩選列 -->
+            <RowDefinition Height="Auto"/>   <!-- 表頭 -->
+            <RowDefinition Height="*"/>      <!-- 資料列表 -->
+        </Grid.RowDefinitions>
+
+        <!-- ===== 容量警示 ===== -->
+        <Border Grid.Row="0" Background="#4A1A1A" CornerRadius="4" Margin="10,5,10,0" Padding="10,6"
+                Visibility="{Binding StorageWarning, Converter={StaticResource StringToVisibilityConverter}}">
+            <TextBlock Text="{Binding StorageWarning}" Foreground="#FF8888" FontSize="12"/>
+        </Border>
+
+        <!-- ===== 統計列 ===== -->
+        <UniformGrid Grid.Row="1" Columns="5" Margin="10,10,10,5">
+            <!-- 上市 -->
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上市" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.ListedCount}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <!-- 上櫃 -->
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上櫃" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.OtcCount}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <!-- 上漲 -->
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="上漲" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.UpCount}" Foreground="#FF5050" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <!-- 平盤 -->
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="平盤" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.FlatCount}" Foreground="#999" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <!-- 下跌 -->
+            <Border Background="#2a2a4a" CornerRadius="6" Margin="3" Padding="8,6">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="下跌" Foreground="#888" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Statistics.DownCount}" Foreground="#4DD078" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ===== 篩選列 ===== -->
+        <DockPanel Grid.Row="2" Margin="10,5,10,5">
+            <!-- 左邊：篩選按鈕 -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <RadioButton Content="全部" IsChecked="True" GroupName="Filter"
+                             Checked="OnFilterAll_Checked"
+                             Style="{StaticResource FilterRadioStyle}" Margin="0,0,5,0"/>
+                <RadioButton Content="新上榜" GroupName="Filter"
+                             Checked="OnFilterNew_Checked"
+                             Style="{StaticResource FilterRadioStyle}"/>
+            </StackPanel>
+
+            <!-- 右邊：抓取按鈕 + 時間 -->
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <Button Content="抓取" Command="{Binding FetchCommand}"
+                        IsEnabled="{Binding CanFetch}"
+                        Style="{StaticResource FetchButtonStyle}"
+                        Margin="0,0,10,0"/>
+                <TextBlock Foreground="#888" VerticalAlignment="Center" FontSize="12">
+                    <Run Text="最後抓取 "/>
+                    <Run Text="{Binding LastFetchTime, Mode=OneWay}"/>
+                </TextBlock>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- ===== 表頭 ===== -->
+        <Grid Grid.Row="3" Margin="10,0,10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="120"/>      <!-- 股票 -->
+                <ColumnDefinition Width="90"/>                     <!-- 股價 -->
+                <ColumnDefinition Width="100"/>                    <!-- 漲跌幅 -->
+                <ColumnDefinition Width="90"/>                     <!-- 成交額 -->
+                <ColumnDefinition Width="60"/>                     <!-- 名次 -->
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="股票" Foreground="#666" FontSize="12" Margin="5,4"/>
+            <TextBlock Grid.Column="1" Text="股價" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="2" Text="漲跌幅" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="3" Text="成交額" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+            <TextBlock Grid.Column="4" Text="名次" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,4,10,4"/>
+        </Grid>
+
+        <!-- ===== 資料列表 ===== -->
+        <ListView Grid.Row="4" ItemsSource="{Binding StockList}"
+                  Background="Transparent" BorderThickness="0"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  Margin="10,0,10,10">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0,1,0,0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border Background="#22223a" CornerRadius="4" Padding="5,8" Margin="0,1">
+                                    <ContentPresenter/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="120"/>  <!-- 股票資訊 -->
+                            <ColumnDefinition Width="90"/>                <!-- 股價 -->
+                            <ColumnDefinition Width="100"/>               <!-- 漲跌幅 -->
+                            <ColumnDefinition Width="90"/>                <!-- 成交額 -->
+                            <ColumnDefinition Width="60"/>                <!-- 名次 -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 股票資訊（名稱 + 代號 + 市場標籤） -->
+                        <StackPanel Grid.Column="0" Margin="5,0">
+                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Symbol}" Foreground="#888" FontSize="11" Margin="0,0,6,0"/>
+                                <!-- 市場標籤 -->
+                                <Border CornerRadius="3" Padding="4,1"
+                                        Background="{Binding Market, Converter={StaticResource MarketTagBackgroundConverter}}">
+                                    <TextBlock Text="{Binding Market, Converter={StaticResource MarketTagTextConverter}}"
+                                               Foreground="White" FontSize="10"/>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 股價 -->
+                        <TextBlock Grid.Column="1" Text="{Binding Price}"
+                                   Foreground="{Binding Change, Converter={StaticResource PriceColorConverter}}"
+                                   FontSize="15" FontWeight="Bold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+
+                        <!-- 漲跌幅 -->
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <!-- 漲跌金額（含▲▼符號） -->
+                            <TextBlock Foreground="{Binding Change, Converter={StaticResource PriceColorConverter}}"
+                                       FontSize="13" HorizontalAlignment="Right">
+                                <TextBlock.Text>
+                                    <Binding Path="Change"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <!-- 漲跌幅 -->
+                            <TextBlock Text="{Binding ChangePercent}"
+                                       Foreground="{Binding ChangePercent, Converter={StaticResource PriceColorConverter}}"
+                                       FontSize="11" HorizontalAlignment="Right"/>
+                        </StackPanel>
+
+                        <!-- 成交額 -->
+                        <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                   HorizontalAlignment="Right" Margin="0,0,10,0"
+                                   Foreground="#ccc" FontSize="13">
+                            <Run Text="{Binding TurnoverHundredMillion, Mode=OneWay}"/>
+                            <Run Text="億" Foreground="#888" FontSize="11"/>
+                        </TextBlock>
+
+                        <!-- 名次 + 變化 Badge -->
+                        <StackPanel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0">
+                            <TextBlock Text="{Binding Rank}" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" HorizontalAlignment="Right"/>
+                            <!-- 名次變化 Badge -->
+                            <Border CornerRadius="3" Padding="4,1" HorizontalAlignment="Right" Margin="0,2,0,0">
+                                <Border.Background>
+                                    <MultiBinding Converter="{StaticResource RankBadgeBackgroundConverter}">
+                                        <Binding Path="RankChange"/>
+                                        <Binding Path="IsNewEntry"/>
+                                    </MultiBinding>
+                                </Border.Background>
+                                <TextBlock Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource RankBadgeTextConverter}">
+                                            <Binding Path="RankChange"/>
+                                            <Binding Path="IsNewEntry"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>
