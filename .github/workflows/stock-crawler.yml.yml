@@ -1,0 +1,46 @@
+name: Stock Crawler
+
+on:
+  workflow_dispatch:    # cron-job.org 觸發用
+  schedule:             # 備用 cron（UTC 時間，比台灣慢 8 小時）
+    - cron: '1 1 * * 1-5'     # 台灣 09:01
+    - cron: '6 1 * * 1-5'     # 台灣 09:06
+    - cron: '10 1 * * 1-5'    # 台灣 09:10
+    - cron: '15 1 * * 1-5'    # 台灣 09:15
+    - cron: '30 1 * * 1-5'    # 台灣 09:30
+    - cron: '45 1 * * 1-5'    # 台灣 09:45
+    - cron: '0 2 * * 1-5'     # 台灣 10:00
+    - cron: '30 2 * * 1-5'    # 台灣 10:30
+    - cron: '0 3 * * 1-5'     # 台灣 11:00
+    - cron: '30 3 * * 1-5'    # 台灣 11:30
+    - cron: '0 4 * * 1-5'     # 台灣 12:00
+    - cron: '30 4 * * 1-5'    # 台灣 12:30
+    - cron: '0 5 * * 1-5'     # 台灣 13:00
+    - cron: '35 5 * * 1-5'    # 台灣 13:35
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: 寫入 Firebase 憑證檔
+        run: |
+          echo '${{ secrets.FIREBASE_CREDENTIAL }}' > /tmp/firebase-key.json
+
+      - name: 執行雲端爬蟲
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          cd StockRankTracker.Cloud
+          dotnet run
