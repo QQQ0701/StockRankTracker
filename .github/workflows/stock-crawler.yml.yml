@@ -42,7 +42,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          echo "Project ID: $FIREBASE_PROJECT_ID"
+          echo "Project ID 長度：$(echo -n $FIREBASE_PROJECT_ID | wc -c)"
+          echo "JSON 裡的 Project ID："
+          grep project_id /tmp/firebase-key.json
           echo "憑證檔大小：$(wc -c < /tmp/firebase-key.json) bytes"
           cd StockRankTracker.Cloud
           dotnet run
