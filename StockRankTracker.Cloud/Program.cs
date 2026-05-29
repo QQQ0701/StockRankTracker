@@ -42,6 +42,13 @@ var detector = new NewEntryDetector(firestore);
 var newEntries = await detector.DetectAsync(todayStr, previousDateStr, stocks);
 Console.WriteLine($"新上榜：{newEntries.Count} 檔");
 
+// ===== 測試 Telegram（測完後刪掉這段）=====
+var testEntries = stocks.Take(3).ToList();
+var testNotifier = new TelegramNotifier();
+await testNotifier.SendAsync(now, testEntries);
+Console.WriteLine("✅ 測試 Telegram 已送出");
+// ===== 測試結束 =====
+
 // ===== 4. Telegram 推播 =====
 if (newEntries.Count > 0)
 {
