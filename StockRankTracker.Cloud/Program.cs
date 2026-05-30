@@ -9,11 +9,11 @@ var now = TimeZoneInfo.ConvertTimeFromUtc(
 Console.WriteLine($"[{now:yyyy-MM-dd HH:mm:ss}] 雲端爬蟲啟動");
 
 var holidays = DateTimeHelper.GetHolidays(now.Year);
-if (!DateTimeHelper.IsTradingDay(now, holidays))
-{
-    Console.WriteLine("今天非交易日，跳過。");
-    return;
-}
+//if (!DateTimeHelper.IsTradingDay(now, holidays))
+//{
+//    Console.WriteLine("今天非交易日，跳過。");
+//    return;
+//}
 
 // ===== 1. 爬蟲抓資料 =====
 Console.WriteLine("開始抓取 Yahoo 成交金額排行...");
