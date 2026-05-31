@@ -9,11 +9,11 @@ var now = TimeZoneInfo.ConvertTimeFromUtc(
 Console.WriteLine($"[{now:yyyy-MM-dd HH:mm:ss}] 雲端爬蟲啟動");
 
 var holidays = DateTimeHelper.GetHolidays(now.Year);
-//if (!DateTimeHelper.IsTradingDay(now, holidays))
-//{
-//    Console.WriteLine("今天非交易日，跳過。");
-//    return;
-//}
+if (!DateTimeHelper.IsTradingDay(now, holidays))
+{
+    Console.WriteLine("今天非交易日，跳過。");
+    return;
+}
 
 // ===== 1. 爬蟲抓資料 =====
 Console.WriteLine("開始抓取 Yahoo 成交金額排行...");
@@ -42,12 +42,12 @@ var detector = new NewEntryDetector(firestore);
 var newEntries = await detector.DetectAsync(todayStr, previousDateStr, stocks);
 Console.WriteLine($"新上榜：{newEntries.Count} 檔");
 
-// ===== 測試 Telegram（測完後刪掉這段）=====
-var testEntries = stocks.Take(3).ToList();
-var testNotifier = new TelegramNotifier();
-await testNotifier.SendAsync(now, testEntries);
-Console.WriteLine("✅ 測試 Telegram 已送出");
-// ===== 測試結束 =====
+//// ===== 測試 Telegram（測完後刪掉這段）=====
+//var testEntries = stocks.Take(3).ToList();
+//var testNotifier = new TelegramNotifier();
+//await testNotifier.SendAsync(now, testEntries);
+//Console.WriteLine("✅ 測試 Telegram 已送出");
+//// ===== 測試結束 =====
 
 // ===== 4. Telegram 推播 =====
 if (newEntries.Count > 0)
