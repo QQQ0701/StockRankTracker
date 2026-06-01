@@ -1,8 +1,21 @@
 name: Stock Crawler
 
 on:
-  workflow_dispatch:    # cron-job.org 觸發用
-  schedule:             # 備用 cron（UTC 時間，比台灣慢 8 小時）
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '測試模式（跳過時間閘門）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      force_date:
+        description: '強制日期（如 2026-05-29），空白=用今天'
+        required: false
+        default: ''
+  schedule:           # 備用 cron（UTC 時間，比台灣慢 8 小時）
     - cron: '1 1 * * 1-5'     # 台灣 09:01
     - cron: '6 1 * * 1-5'     # 台灣 09:06
     - cron: '10 1 * * 1-5'    # 台灣 09:10
@@ -41,6 +54,9 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}       # 新增
+          FORCE_DATE: ${{ github.event.inputs.force_date || '' }}           # 新增
+      
         run: |
           echo "Project ID 長度：$(echo -n $FIREBASE_PROJECT_ID | wc -c)"
           echo "JSON 裡的 Project ID："

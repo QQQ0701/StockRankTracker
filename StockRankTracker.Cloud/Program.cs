@@ -7,6 +7,13 @@ var now = TimeZoneInfo.ConvertTimeFromUtc(
 
 Console.WriteLine($"[{now:yyyy-MM-dd HH:mm:ss}] 雲端爬蟲啟動");
 
+// ===== 測試模式 =====
+var isTestMode = Environment.GetEnvironmentVariable("TEST_MODE") == "true";
+var forceDate = Environment.GetEnvironmentVariable("FORCE_DATE") ?? "";
+
+if (isTestMode)
+    Console.WriteLine("⚠️ 測試模式：跳過時間閘門");
+
 // ===== 新增：時間閘門 =====
 // 14 個允許的台北時間（分鐘）
 int[] allowedMinutes = {
@@ -26,15 +33,22 @@ var matched = allowedMinutes
     .OrderBy(t => Math.Abs(nowMinutes - t))
     .FirstOrDefault(-1);
 
-if (matched == -1)
+string timeTag;
+if (isTestMode)
 {
-    Console.WriteLine($"目前時間 {now:HH:mm} 不在允許的 14 個時段內，跳過。");
-    return;
+    timeTag = "1335";
+    Console.WriteLine($"測試模式，timeTag 固定：{timeTag}");
 }
-
-// 用匹配到的「目標時間」當作 timeTag（而非實際延遲後的時間）
-var timeTag = $"{matched / 60:D2}{matched % 60:D2}";
-Console.WriteLine($"匹配到目標時段：{timeTag}");
+else
+{
+    if (matched == -1)
+    {
+        Console.WriteLine($"目前時間 {now:HH:mm} 不在允許的 14 個時段內，跳過。");
+        return;
+    }
+    timeTag = $"{matched / 60:D2}{matched % 60:D2}";
+    Console.WriteLine($"匹配到目標時段：{timeTag}");
+}
 // ===== 時間閘門結束 =====
 
 var holidays = DateTimeHelper.GetHolidays(now.Year);
@@ -57,7 +71,8 @@ if (stocks.Count == 0)
 
 Console.WriteLine($"開始寫入 Firestore（快照 {timeTag}）...");
 var firestore = new FirestoreRepository();
-var todayStr = now.ToString("yyyy-MM-dd");
+var todayStr = string.IsNullOrEmpty(forceDate) ? now.ToString("yyyy-MM-dd") : forceDate;
+Console.WriteLine($"使用日期：{todayStr}");
 await firestore.SaveDailyStocksAsync(todayStr, timeTag, stocks);  // ← 加 timeTag
 Console.WriteLine("Firestore 寫入完成");
 
