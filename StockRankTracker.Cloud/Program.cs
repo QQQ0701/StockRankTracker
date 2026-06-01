@@ -1,12 +1,41 @@
 ﻿using StockRankTracker.Cloud.Services;
 using StockRankTracker.Cloud.Helpers;
 
-// ===== 時區與交易日判斷 =====
 var now = TimeZoneInfo.ConvertTimeFromUtc(
     DateTime.UtcNow,
     TimeZoneInfo.FindSystemTimeZoneById("Asia/Taipei"));
 
 Console.WriteLine($"[{now:yyyy-MM-dd HH:mm:ss}] 雲端爬蟲啟動");
+
+// ===== 新增：時間閘門 =====
+// 14 個允許的台北時間（分鐘）
+int[] allowedMinutes = {
+    9*60+1, 9*60+6, 9*60+10, 9*60+15,       // 09:01, 09:06, 09:10, 09:15
+    9*60+30, 9*60+45,                          // 09:30, 09:45
+    10*60, 10*60+30,                            // 10:00, 10:30
+    11*60, 11*60+30,                            // 11:00, 11:30
+    12*60, 12*60+30,                            // 12:00, 12:30
+    13*60, 13*60+35                             // 13:00, 13:35
+};
+
+int nowMinutes = now.Hour * 60 + now.Minute;
+int tolerance = 20;  // GitHub Actions 延遲容忍：±20 分鐘
+
+var matched = allowedMinutes
+    .Where(t => Math.Abs(nowMinutes - t) <= tolerance)
+    .OrderBy(t => Math.Abs(nowMinutes - t))
+    .FirstOrDefault(-1);
+
+if (matched == -1)
+{
+    Console.WriteLine($"目前時間 {now:HH:mm} 不在允許的 14 個時段內，跳過。");
+    return;
+}
+
+// 用匹配到的「目標時間」當作 timeTag（而非實際延遲後的時間）
+var timeTag = $"{matched / 60:D2}{matched % 60:D2}";
+Console.WriteLine($"匹配到目標時段：{timeTag}");
+// ===== 時間閘門結束 =====
 
 var holidays = DateTimeHelper.GetHolidays(now.Year);
 if (!DateTimeHelper.IsTradingDay(now, holidays))
@@ -15,7 +44,6 @@ if (!DateTimeHelper.IsTradingDay(now, holidays))
     return;
 }
 
-// ===== 1. 爬蟲抓資料 =====
 Console.WriteLine("開始抓取 Yahoo 成交金額排行...");
 var crawler = new TurnoverCrawler();
 var stocks = await crawler.FetchAsync();
@@ -27,29 +55,20 @@ if (stocks.Count == 0)
     return;
 }
 
-// ===== 2. 存 Firestore =====
-Console.WriteLine("開始寫入 Firestore...");
+Console.WriteLine($"開始寫入 Firestore（快照 {timeTag}）...");
 var firestore = new FirestoreRepository();
 var todayStr = now.ToString("yyyy-MM-dd");
-await firestore.SaveDailyStocksAsync(todayStr, stocks);
+await firestore.SaveDailyStocksAsync(todayStr, timeTag, stocks);  // ← 加 timeTag
 Console.WriteLine("Firestore 寫入完成");
 
-// ===== 3. 比對新上榜 =====
-Console.WriteLine("開始比對新上榜...");
+// ===== 新上榜比對：固定比對前一天 13:35 =====
+Console.WriteLine("開始比對新上榜（對比前一天 13:35）...");
 var previousDate = DateTimeHelper.GetPreviousTradingDate(now.Date);
 var previousDateStr = previousDate.ToString("yyyy-MM-dd");
 var detector = new NewEntryDetector(firestore);
-var newEntries = await detector.DetectAsync(todayStr, previousDateStr, stocks);
+var newEntries = await detector.DetectAsync(todayStr, timeTag, previousDateStr, stocks);
 Console.WriteLine($"新上榜：{newEntries.Count} 檔");
 
-//// ===== 測試 Telegram（測完後刪掉這段）=====
-//var testEntries = stocks.Take(3).ToList();
-//var testNotifier = new TelegramNotifier();
-//await testNotifier.SendAsync(now, testEntries);
-//Console.WriteLine("✅ 測試 Telegram 已送出");
-//// ===== 測試結束 =====
-
-// ===== 4. Telegram 推播 =====
 if (newEntries.Count > 0)
 {
     Console.WriteLine("發送 Telegram 通知...");

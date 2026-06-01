@@ -18,10 +18,10 @@ public class NewEntryDetector
     /// 找出新上榜的股票
     /// </summary>
     public async Task<List<StockEntry>> DetectAsync(
-        string todayStr, string previousDateStr, List<StockEntry> todayStocks)
+    string todayStr, string timeTag, string previousDateStr, List<StockEntry> todayStocks)
     {
         // 取得前一個交易日的股票代號清單
-        var previousSymbols = await _repo.GetSymbolsByDateAsync(previousDateStr);
+        var previousSymbols = await _repo.GetSymbolsByDateAsync(previousDateStr, "1335");
 
         // 如果前一天沒資料（第一次跑），就不比對，回傳空
         if (previousSymbols.Count == 0)
