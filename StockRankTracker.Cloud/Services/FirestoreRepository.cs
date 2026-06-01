@@ -80,7 +80,8 @@ public class FirestoreRepository
 
         foreach (var doc in snapshot.Documents)
         {
-            if (doc.TryGetValue<string>("symbol", out var symbol))
+            if (doc.TryGetValue<int>("rank", out var rank) && rank <= 30
+                && doc.TryGetValue<string>("symbol", out var symbol))
             {
                 symbols.Add(symbol);
             }

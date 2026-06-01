@@ -23,19 +23,17 @@ public class NewEntryDetector
         // 取得前一個交易日的股票代號清單
         var previousSymbols = await _repo.GetSymbolsByDateAsync(previousDateStr, "1335");
 
-        // 如果前一天沒資料（第一次跑），就不比對，回傳空
         if (previousSymbols.Count == 0)
         {
             Console.WriteLine($"前一交易日 {previousDateStr} 無資料，跳過新上榜比對。");
             return new List<StockEntry>();
         }
 
-        // 今天有、昨天沒有 → 新上榜
+        // 只比對今天前 30 名
         var newEntries = todayStocks
-            .Where(s => !previousSymbols.Contains(s.Symbol))
+            .Where(s => s.Rank <= 30 && !previousSymbols.Contains(s.Symbol))
             .OrderBy(s => s.Rank)
             .ToList();
-
         return newEntries;
     }
 }
