@@ -37,7 +37,7 @@ public class TelegramNotifier
             if (decimal.TryParse(s.ChangePercent, out var pct))
                 arrow = pct >= 0 ? "▲" : "▼";
 
-            sb.AppendLine($"{i + 1}. #{s.Rank} {s.Name}({s.Symbol}) {s.Price} {arrow}{s.ChangePercent}%");
+            sb.AppendLine($"{i + 1}. #{s.Rank} {s.Name}({s.Symbol}) {s.Price} {arrow}{s.ChangePercent}");
         }
 
         var message = sb.ToString();
